@@ -7,8 +7,8 @@ def exec_cmd(session, item, branch, program):
     outfile = log_file_name(session, item, branch, program, 'out')
     errfile = log_file_name(session, item, branch, program, 'err')
     
-    print("[LOG] {}/{} stdout will be written to {}".format(branch, program, outfile))
-    print("[LOG] {}/{} stderr will be written to {}".format(branch, program, errfile))
+    print_log("[LOG] {}/{} stdout will be written to {}".format(branch, program, outfile))
+    print_log("[LOG] {}/{} stderr will be written to {}".format(branch, program, errfile))
     
     if branch == 'gptool' and program == 'gptool':
         cmd = "gptool -f {} -nodedisp -o {}".format(item.rawdatafile, session.working_dir)
@@ -26,7 +26,7 @@ def exec_cmd(session, item, branch, program):
         Nprocess = 16
         cmd = 'crp_rficlean_gm.sh {} {} {} {} {} "-psrf {} -psrfbins 32 -gmtstamp {}"'.format(fil_file, session.rfic_conf_file, Nprocess, item.rawdatafile, rfic_hdrfilename, item.f0psr, item.timestampfile)
     
-    print("[CMD]", cmd)
+    print_log("[CMD]", cmd)
     
     cmd_split = filter(lambda x: len(x)>0, cmd.split(' '))
      
@@ -54,12 +54,12 @@ def log_file_name(session, item, branch, program, dev):
     return "{}/{}.{}.{}".format(item.logdir, program, branch, dev)
 
 def print_exec_time(branch, program, exectime):
-    print("[TIME] Execution time for {}/{} = {} s".format(branch, program, exectime))
+    print_log("[TIME] Execution time for {}/{} = {} s".format(branch, program, exectime))
 
 def remove_tmp_file(session, item, branch, ext):
     if (not session.test_mode) and session.delete_tmp_files:
         filename = output_file_name(session, item, branch, ext)
-        print("Removing file", filename)
+        print_log("Removing file", filename)
         os.remove(filename)
     
 def run_gptool(session, item, branch):
@@ -82,7 +82,7 @@ def run_filterbank(session, item, branch):
     fil_file = output_file_name(session, item, branch, 'fil')
     cmd = "filterbank {} -mjd {:0.18f} -rf {} -nch {} -bw {} -ts {} -df {} > {}".format(filterbank_in_file, item.timestamp, item.freq, item.nchan, item.chanwidth, item.tsmpl, item.sideband_code, fil_file)
     
-    print("[CMD]", cmd)
+    print_log("[CMD]", cmd)
     
     if not session.test_mode:
         start_time = time.time()
@@ -100,10 +100,10 @@ def run_pdmp(session, item, branch):
     exec_cmd(session, item, branch, program)
 
 def run_rficlean(session, item, branch):
-    print("[INFO] Trying to make the rficlean-gmhdr file ...")
+    print_log("[INFO] Trying to make the rficlean-gmhdr file ...")
     rfic_hdrfilename = "{}/{}-{}-ttemp-gm.info".format(session.working_dir, item.jname, item.idx)
     if not utils.make_rficlean_hdrfile(rfic_hdrfilename, item.jname, item.freq, item.nchan, item.chanwidth, item.tsmpl, item.sideband):
-        print ("[ERROR] Could not make the rficlean-gmhdr file!")
+        print_log ("[ERROR] Could not make the rficlean-gmhdr file!")
         sys.exit(0)
         
     program = 'rfiClean'

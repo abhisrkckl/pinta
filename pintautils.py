@@ -38,16 +38,16 @@ def fetch_f0(parfile_name):
                     #print ("fetched F0 :  %f \n "%f0)
                 except:
                     pass #print ("F0 is not in this line. ")
-    print ("[INPUT] Pulsar spin-frequency found :  %f "%f0)
+    print_log("[INPUT] Pulsar spin-frequency found :  %f "%f0)
     return f0
 
 def make_rficlean_hdrfile(file_name, psrj,frequency,nchannels,bandwidth,samplingtime,whichband):
-        print('[INFO] Removing any previous rfiClean-gmhdr file %s   ...  '%(file_name), end=' ')
+        print_log('[INFO] Removing any previous rfiClean-gmhdr file %s   ...  '%(file_name), end=' ')
         try: 
             os.remove("%s"%(file_name))
-            print("Done.")
+            print_log("Done.")
         except:
-            print("[ERROR] Could not delete the rfiClean-gmhdr file!")
+            print_log("[ERROR] Could not delete the rfiClean-gmhdr file!")
 
         with open(file_name, 'w') as hdrfile:
             try:
@@ -58,11 +58,11 @@ def make_rficlean_hdrfile(file_name, psrj,frequency,nchannels,bandwidth,sampling
                 elif whichband == 'LSB':
                      hdrfile.write(str(float(nchannels)*float(bandwidth)) + '\n')
                 else:
-                     print("[ERROR] Unrecognizable sideband. Quitting...")
+                     print_log("[ERROR] Unrecognizable sideband. Quitting...")
                      sys.exit(0)
                 hdrfile.write(str(nchannels) + '\n')
                 hdrfile.write(psrj)
-                print ("[INFO] The rfiClean-gmhdr file written out!")
+                print_log ("[INFO] The rfiClean-gmhdr file written out!")
             except:
                 return False
         return True
@@ -99,11 +99,11 @@ def copy_gptool_in(gptdir, current_dir, intfreq):
     src = "{}/gptool.in.{}".format(gptdir, intfreq)
     dst = "{}/gptool.in".format(current_dir)
     shutil.copy(src, dst)
-    print("[INFO] Copied gptool.in file for freq {}".format(intfreq))
+    print_log("[INFO] Copied gptool.in file for freq {}".format(intfreq))
 
 def check_mkdir(dirname):
     if not os.access(dirname, os.F_OK):
-        print("[INFO] Creating directory", dirname)
+        print_log("[INFO] Creating directory", dirname)
         os.mkdir(dirname)
     
 aux_files_wcards = ["*.info", "*.gpt", "pdmp.*", 'gptool.in*']
@@ -112,7 +112,7 @@ def move_aux_files(session, item):
     glb = lambda f : glob.glob("{}/{}".format(session.working_dir, f))
     aux_files = set(sum(map(glb, aux_files_wcards), []))
     for src in aux_files:
-        print("[INFO] Moving file {} to aux.".format(src))
+        print_log("[INFO] Moving file {} to aux.".format(src))
         dst = "{}/{}".format(item.auxdir, os.path.basename(src))
         shutil.move(src, dst)
     
@@ -120,11 +120,11 @@ def remove_aux_files(session, item):
     glb = lambda f : glob.glob("{}/{}".format(session.working_dir, f))
     aux_files = set(sum(map(glb, aux_files_wcards), []))
     for src in aux_files:
-        print("[INFO] Removing file {}".format(src))
+        print_log("[INFO] Removing file {}".format(src))
         os.unlink(src)
 
-def print_log(session, message):
-    print(message)
+def print_log(session, message, end='\n'):
+    print_log(message, end=end)
     if session.log_to_file:
-        session.logfile.write(message+"\n")
+        session.logfile.write(message+end)
 
