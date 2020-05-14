@@ -15,9 +15,9 @@ import glob
 import yaml
 #import multiprocessing as mproc
 
+from pintasession import session
 import pintautils as utils
 import pintaexec as pexec
-from pintasession import session
 
 for idx, item in enumerate(session.pipeline_items):
     

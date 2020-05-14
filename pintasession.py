@@ -41,7 +41,7 @@ class Session:
         self.user = getpass.getuser()
         self.starttime = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         self.hostname = socket.gethostname()
-        utils.print_log("[INFO] pinta invoked by {} at {} on {}".format(self.user, self.starttime, self.hostname))
+        utils.print_log(self, "[INFO] pinta invoked by {} at {} on {}".format(self.user, self.starttime, self.hostname))
         
         #= Script directory and Currecnt Directory =====================================================================        
         self.script_dir = tests.test_read_dir( os.path.dirname(os.path.realpath(__file__)) )
@@ -49,7 +49,7 @@ class Session:
         
         #= Input and working directories ===============================================================================
         if len(args)<2:
-            utils.print_log("[ERROR] Input and working directories must be provided as command line arguments.")
+            utils.print_log(self, "[ERROR] Input and working directories must be provided as command line arguments.")
             sys.exit(0)
             
         self.input_dir = tests.test_read_dir(args[0])
@@ -61,47 +61,47 @@ class Session:
         #= Test Mode ===================================================================================================
         self.test_mode = opts.get("--test") is not None
         if self.test_mode:
-            utils.print_log("[CONFIG] Running in test mode. Commands will only be displayed and not executed.")
+            utils.print_log(self, "[CONFIG] Running in test mode. Commands will only be displayed and not executed.")
         
         #= Reading config file =========================================================================================
         self.config_file = '{}/{}'.format(self.script_dir, 'pinta.yaml')
         try:
-            utils.print_log("[CONFIG] Reading config from", self.config_file)
+            utils.print_log(self, "[CONFIG] Reading config from", self.config_file)
             config = yaml.load(open(self.config_file), Loader=yaml.FullLoader)
         except:
-            utils.print_log("[CONFIG] Unable to read config file ", config_file)
+            utils.print_log(self, "[CONFIG] Unable to read config file ", config_file)
             sys.exit(0)
         
         #= Which branches to run =======================================================================================
         self.run_gptool = opts.get("--no-gptool") is None
         if self.run_gptool:
-            utils.print_log("[CONFIG] Will run gptool.")
+            utils.print_log(self, "[CONFIG] Will run gptool.")
         else:
-            utils.print_log("[CONFIG] Will not run gptool.")
+            utils.print_log(self, "[CONFIG] Will not run gptool.")
 
         self.run_rficlean = opts.get("--no-rficlean") is None
         if self.run_rficlean:
-            utils.print_log("[CONFIG] Will run rficlean.")
+            utils.print_log(self, "[CONFIG] Will run rficlean.")
         else:
-            utils.print_log("[CONFIG] Will not run rficlean.")
+            utils.print_log(self, "[CONFIG] Will not run rficlean.")
         
         #= Pulsar ephemeris directory, gptool config directory and rfiClean config file ================================
         if opts.get("--pardir") is not None:
-            utils.print_log("[CONFIG] *.par directory provided in command line.")
+            utils.print_log(self, "[CONFIG] *.par directory provided in command line.")
             self.par_dir = tests.test_read_dir( opts.get("--pardir") )
         else:
             self.par_dir = tests.test_read_dir( config['pinta']['pardir'] )
 
         if self.run_gptool:
             if opts.get("--gptdir") is not None:
-                utils.print_log("[CONFIG] gptool.in directory provided in command line.")
+                utils.print_log(self, "[CONFIG] gptool.in directory provided in command line.")
                 self.gptool_in_dir = tests.test_read_dir( opts.get("--gptdir") )
             else:
                 self.gptool_in_dir = tests.test_read_dir( config['pinta']['gptdir'] )
         
         if self.run_rficlean:
             if opts.get("--rficconf") is not None:
-                utils.print_log("[CONFIG] rfiClean configuration file profided in command line.")
+                utils.print_log(self, "[CONFIG] rfiClean configuration file profided in command line.")
                 self.rfic_conf_file = tests.test_input_file( opts.get("--rficconf") )
             else:
                 self.rfic_conf_file = tests.test_input_file( config['pinta']["rficconf"] )
@@ -109,9 +109,9 @@ class Session:
         #= Whether to delete intermediate outputs ======================================================================
         self.delete_tmp_files = opts.get("--nodel") is None
         if self.delete_tmp_files:
-            utils.print_log("[CONFIG] Will remove intermediate products.")
+            utils.print_log(self, "[CONFIG] Will remove intermediate products.")
         else:
-            utils.print_log("[CONFIG] Will not remove intermediate products.")
+            utils.print_log(self, "[CONFIG] Will not remove intermediate products.")
         
         #= Checking if all required programs are present ===============================================================
         #program_list = ['gptool','dspsr','filterbank','tempo2','pdmp','crp_rficlean_gm.sh']
@@ -132,7 +132,7 @@ class Session:
         #= Checking and reading pipeline.in ============================================================================
         self.pipeline_in_file = tests.test_input_file("%s/pipeline.in"%(self.working_dir))
         
-        utils.print_log("[INPUT] Reading %s/pipeline.in..."%(self.working_dir), end=' ')
+        utils.print_log(self, "[INPUT] Reading %s/pipeline.in..."%(self.working_dir), end=' ')
         try:
             self.pipeline_in_data = np.genfromtxt("%s/pipeline.in"%(self.working_dir), dtype=str, comments='#')
             if len(self.pipeline_in_data.shape)==1:
@@ -141,18 +141,18 @@ class Session:
             no_of_cols_expected = 12
             if self.pipeline_in_data.shape[1] != no_of_cols_expected:
                 raise ValueError()
-            utils.print_log("Done. %d item(s) to be processed."%(len(self.pipeline_in_data)))
+            utils.print_log(self, "Done. %d item(s) to be processed."%(len(self.pipeline_in_data)))
         except ValueError:
-            utils.print_log("Invalid format... Quitting...")
+            utils.print_log(self, "Invalid format... Quitting...")
             sys.exit(0)
         
         self.retain_aux = opts.get("--retain-aux") is not None
         if self.retain_aux:
             self.auxdir = "{}/aux".format(self.working_dir)
             utils.check_mkdir(self.auxdir)
-            utils.print_log("[CONFIG] Will move auxiliary files to", self.auxdir)
+            utils.print_log(self, "[CONFIG] Will move auxiliary files to", self.auxdir)
         else:
-            utils.print_log("[CONFIG] Will remove auxiliary files.")
+            utils.print_log(self, "[CONFIG] Will remove auxiliary files.")
         
         self.logdir = "{}/log".format(self.working_dir)
         utils.check_mkdir(self.logdir)
@@ -162,22 +162,22 @@ class Session:
             try:
                 self.pipeline_items.append( PipelineItem(self, row, idx) )
             except Exception as e:
-                utils.print_log("[ERROR] Error processing row #{} of pipeline.in".format(idx+1))
+                utils.print_log(self, "[ERROR] Error processing row #{} of pipeline.in".format(idx+1))
                 traceback.utils.print_log_exc()
                 
                 
     def get_lock(self):
         self.lockfile = "{}/{}".format(self.working_dir, 'pinta.lock')
         if os.access(self.lockfile, os.F_OK):
-            utils.print_log("Another instance of pinta seems to be running on this directory.")
-            utils.print_log("*IMPORTANT* If you are /sure/ this is a mistake, please remove pinta.lock manualy and try again. DOING THIS MAY CORRUPT THE DATA.")
+            print("[ERROR] Another instance of pinta seems to be running on this directory.")
+            print("[INFO] *IMPORTANT* If you are /sure/ this is a mistake, please remove pinta.lock manualy and try again. DOING THIS MAY CORRUPT THE DATA.")
             sys.exit(0)
         else:
-            utils.print_log("[LOCK] Creating lock file...")
+            utils.print_log(self, "[LOCK] Creating lock file...")
             utils.touch_file(self.lockfile)
         
     def finish(self):
-        utils.print_log("[LOCK] Removing lock file...")
+        utils.print_log(self, "[LOCK] Removing lock file...")
         os.remove(self.lockfile)
         sys.exit(0)
     
@@ -189,7 +189,7 @@ class Session:
         if self.log_to_file:
             self.logfile.close()
         if hasattr(self, 'lockfile') and os.access(self.lockfile, os.F_OK): 
-            utils.print_log("[LOCK] Removing lock file...")
+            utils.print_log(self, "[LOCK] Removing lock file...")
             os.remove(self.lockfile)
             
 
@@ -208,7 +208,7 @@ class PipelineItem:
         
         self.timestampfile = tests.test_input_file( "{}/{}".format(session.working_dir, pipeline_in_row[2]) )
         self.timestamp = utils.process_timestamp(self.timestampfile)
-        utils.print_log("[INPUT] The timestamp is MJD", self.timestamp)
+        utils.print_log(session, "[INPUT] The timestamp is MJD", self.timestamp)
                 
         self.parfile = tests.test_input_file( "{}/{}.par".format(session.par_dir, self.jname) )
         
